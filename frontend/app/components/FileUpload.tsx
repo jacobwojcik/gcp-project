@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import React, { useState } from 'react';
 
 const UploadForm = () => {
@@ -16,10 +15,13 @@ const UploadForm = () => {
       try {
         const formData = new FormData();
         formData.append('image', file);
-        const response = await fetch('http://localhost:8080/upload', {
-          method: 'POST',
-          body: formData,
-        });
+        const response = await fetch(
+          'https://backend-service-lwwdaqswoa-uc.a.run.app/upload',
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
         const data = await response.json();
         setProcessedImageUrl(data.processedImageUrl);
       } catch (error) {
