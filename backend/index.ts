@@ -181,6 +181,3 @@ const pollForProcessedImage = async (fileName: string, storage: Storage, timeout
   
     throw new Error('Timed out waiting for processed image');
   };
-
-  //https://frontend-service-lwwdaqswoa-uc.a.run.app
-  //https://backend-service-lwwdaqswoa-uc.a.run.app
