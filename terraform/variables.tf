@@ -43,3 +43,21 @@ variable "processed_bucket_retention_days" {
   type        = number
   default     = 90
 }
+
+variable "function_memory" {
+  description = "Memory allocation for the Cloud Function"
+  type        = number
+  default     = 512
+}
+
+variable "function_runtime" {
+  description = "Runtime for the Cloud Function"
+  type        = string
+  default     = "nodejs18"
+}
+
+variable "function_timeout" {
+  description = "Timeout for the Cloud Function (in seconds)"
+  type        = number
+  default     = 60
+}

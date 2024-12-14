@@ -1,3 +1,26 @@
+resource "null_resource" "backend_image" {
+  triggers = {
+    docker_file = filemd5("../backend/Dockerfile")
+    source_dir  = sha256(join("", [for f in fileset("../backend", "**"): filemd5("../backend/${f}")]))
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+      echo "Starting backend image build..."
+      cd ../backend
+      echo "Building backend Docker image..."
+      docker build -t ${var.region}-docker.pkg.dev/${var.project_id}/app-images/${var.backend_image} . || exit 1
+      echo "Configuring Docker authentication..."
+      gcloud auth configure-docker ${var.region}-docker.pkg.dev || exit 1
+      echo "Pushing backend image..."
+      docker push ${var.region}-docker.pkg.dev/${var.project_id}/app-images/${var.backend_image} || exit 1
+      echo "Backend image build and push complete"
+    EOT
+  }
+
+  depends_on = [google_artifact_registry_repository.repo]
+}
+
 # Cloud Run service for backend
 resource "google_cloud_run_service" "backend" {
   name     = "backend-service"
@@ -7,11 +30,18 @@ resource "google_cloud_run_service" "backend" {
     spec {
       containers {
         image = "${var.region}-docker.pkg.dev/${var.project_id}/app-images/${var.backend_image}"
+        env {
+          name  = "PROJECT_ID"
+          value = var.project_id
+        }
       }
     }
   }
 
-  depends_on = [google_artifact_registry_repository.repo]
+  depends_on = [
+    google_artifact_registry_repository.repo,
+    null_resource.backend_image
+  ]
 }
 
 # Make the service public
