@@ -1,20 +1,22 @@
 resource "null_resource" "frontend_image" {
   triggers = {
     docker_file = filemd5("../frontend/Dockerfile")
-    source_dir  = sha256(join("", [for f in fileset("../frontend", "**"): filemd5("../frontend/${f}")]))
+    source_code = sha256(join("", [for f in fileset("../frontend", "{*.ts,*.tsx,package.json}") : filemd5("../frontend/${f}")]))
   }
 
   provisioner "local-exec" {
     command = <<EOT
-      echo "Starting frontend image build..."
-      cd ../frontend
-      echo "Building frontend Docker image..."
-      docker build -t ${var.region}-docker.pkg.dev/${var.project_id}/app-images/${var.frontend_image} . || exit 1
-      echo "Configuring Docker authentication..."
-      gcloud auth configure-docker ${var.region}-docker.pkg.dev || exit 1
-      echo "Pushing frontend image..."
-      docker push ${var.region}-docker.pkg.dev/${var.project_id}/app-images/${var.frontend_image} || exit 1
-      echo "Frontend image build and push complete"
+      # Check if image already exists
+      if docker pull ${var.region}-docker.pkg.dev/${var.project_id}/app-images/${var.frontend_image}:latest 2>/dev/null; then
+        echo "Image already exists and no changes detected, skipping build"
+      else
+        echo "[$(date)] Building and pushing frontend image..."
+        cd ../frontend
+        docker build -t ${var.region}-docker.pkg.dev/${var.project_id}/app-images/${var.frontend_image} .
+        gcloud auth configure-docker ${var.region}-docker.pkg.dev --quiet
+        docker push ${var.region}-docker.pkg.dev/${var.project_id}/app-images/${var.frontend_image}
+        echo "[$(date)] Frontend image build complete"
+      fi
     EOT
   }
 

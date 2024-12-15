@@ -1,20 +1,21 @@
 resource "null_resource" "backend_image" {
   triggers = {
     docker_file = filemd5("../backend/Dockerfile")
-    source_dir  = sha256(join("", [for f in fileset("../backend", "**"): filemd5("../backend/${f}")]))
+    source_code = sha256(join("", [for f in fileset("../backend", "{*.ts,package.json}") : filemd5("../backend/${f}")]))
   }
 
   provisioner "local-exec" {
     command = <<EOT
-      echo "Starting backend image build..."
-      cd ../backend
-      echo "Building backend Docker image..."
-      docker build -t ${var.region}-docker.pkg.dev/${var.project_id}/app-images/${var.backend_image} . || exit 1
-      echo "Configuring Docker authentication..."
-      gcloud auth configure-docker ${var.region}-docker.pkg.dev || exit 1
-      echo "Pushing backend image..."
-      docker push ${var.region}-docker.pkg.dev/${var.project_id}/app-images/${var.backend_image} || exit 1
-      echo "Backend image build and push complete"
+      if docker pull ${var.region}-docker.pkg.dev/${var.project_id}/app-images/${var.backend_image}:latest 2>/dev/null; then
+        echo "Image already exists and no changes detected, skipping build"
+      else
+        echo "[$(date)] Building and pushing backend image..."
+        cd ../backend
+        docker build -t ${var.region}-docker.pkg.dev/${var.project_id}/app-images/${var.backend_image} .
+        gcloud auth configure-docker ${var.region}-docker.pkg.dev --quiet
+        docker push ${var.region}-docker.pkg.dev/${var.project_id}/app-images/${var.backend_image}
+        echo "[$(date)] Backend image build complete"
+      fi
     EOT
   }
 
