@@ -1,4 +1,3 @@
-# Storage Bucket for Original Images
 resource "google_storage_bucket" "original_images" {
   name          = var.original_bucket_name
   location      = var.region
@@ -14,7 +13,6 @@ resource "google_storage_bucket" "original_images" {
   }
 }
 
-# Storage Bucket for Processed Images
 resource "google_storage_bucket" "processed_images" {
   name          = var.processed_bucket_name
   location      = var.region
@@ -30,7 +28,6 @@ resource "google_storage_bucket" "processed_images" {
   }
 }
 
-# Add IAM permissions for Cloud Run service account
 resource "google_storage_bucket_iam_member" "backend_original_bucket" {
   bucket = google_storage_bucket.original_images.name
   role   = "roles/storage.objectViewer"
@@ -43,7 +40,6 @@ resource "google_storage_bucket_iam_member" "backend_processed_bucket" {
   member = "serviceAccount:${google_cloud_run_service.backend.template[0].spec[0].service_account_name}"
 }
 
-# Add IAM permissions for Cloud Function
 resource "google_storage_bucket_iam_member" "function_original_bucket" {
   bucket = google_storage_bucket.original_images.name
   role   = "roles/storage.objectViewer"

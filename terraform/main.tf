@@ -40,7 +40,6 @@ resource "google_project_service" "services" {
   disable_on_destroy = false
 }
 
-# Create Artifact Registry repository
 resource "google_artifact_registry_repository" "repo" {
   location      = var.region
   repository_id = "app-images"

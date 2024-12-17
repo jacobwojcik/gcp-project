@@ -23,7 +23,6 @@ resource "null_resource" "frontend_image" {
   depends_on = [google_artifact_registry_repository.repo]
 }
 
-# Cloud Run service for frontend
 resource "google_cloud_run_service" "frontend" {
   name     = "frontend-service"
   location = var.region
@@ -46,7 +45,6 @@ resource "google_cloud_run_service" "frontend" {
   ]
 }
 
-# Make the service public
 resource "google_cloud_run_service_iam_member" "frontend_public" {
   service  = google_cloud_run_service.frontend.name
   location = google_cloud_run_service.frontend.location
